@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Threading;
+using System.Threading.Tasks;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -12,11 +14,29 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 
+
 namespace filterWAV
 {
-    
+    public class Data
+    {
+        int a, b;
+
+             public Data(int a, int b)
+        {
+            this.a = a;
+            this.b = b;
+        }
+    }
     public partial class Form1 : Form
     {
+
+        private double[] left = new double[] { };
+        private double[] right = new double[] { };
+        private int threadCount = 1;
+        private uint sampleCount;
+        Series lSeries, rSeries;
+        private interfaceC cppInterface = new interfaceC();
+        private interfaceASM asmInterface = new interfaceASM();
         public Form1()
         {
             InitializeComponent();
@@ -65,19 +85,23 @@ namespace filterWAV
 
             int dataSize = BitConverter.ToInt32(wav, 40);
 
-            string msg = "Format: " + riff + "\n File size: " + fileSize + "\n File type: " + wave + "\n Sample Rate: "  + sampleRate + "\n Number of channels: " + channels 
-                + "\n Bytes Per Second: " + bytesPerSecond + "\n Bytes per Sample: " + bytesPerSample + "\n Bits per Sample: " 
-                + bitsPerSample + "\n Data: " + data + "\n Data size: " + dataSize;
-
-            MessageBox.Show(msg);
            
             
             int pos = 44;
            
-            int samples = dataSize / bytesPerSample;
-      
+            uint samples =  (uint)dataSize / (uint)bytesPerSample;
 
-            
+            sampleCount = samples;
+
+
+            string msg = "Format: " + riff + "\n File size: " + fileSize + "\n File type: " + wave + "\n Sample Rate: " + sampleRate + "\n Number of channels: " + channels
+                + "\n Bytes Per Second: " + bytesPerSecond + "\n Bytes per Sample: " + bytesPerSample + "\n Bits per Sample: "
+                + bitsPerSample + "\n Data: " + data + "\n Data size: " + dataSize + "\n Sample count" + sampleCount;
+
+
+
+            MessageBox.Show(msg);
+
             left = new double[samples];
             if (channels == 2) right = new double[samples];
             else right = null; // if mono then right array is null
@@ -121,11 +145,17 @@ namespace filterWAV
                      double[] left = new double[] { };
                       double[] right = new double[] { };
                       this.openWav(filePath, out left, out right);
-
+                    this.left = left;
+                    this.right = right;
                     waveChartLeft.Series.Clear();
                     waveChartRight.Series.Clear();
+
                     Series seriesL = waveChartLeft.Series.Add("WaveLeft");
                     Series seriesR = waveChartRight.Series.Add("WaveRight");
+
+                    lSeries = seriesL;
+                    rSeries = seriesR;
+
 
                     seriesL.ChartType = SeriesChartType.Spline;
                     seriesR.ChartType = SeriesChartType.Spline;
@@ -198,16 +228,15 @@ namespace filterWAV
 
         private void runButton_Click(object sender, EventArgs e)
         {
-            interfaceC cppInterface = new interfaceC();
-            interfaceASM asmInterface = new interfaceASM();
+            
             string result = "";
             double x = 5.25;
             double y = 2.5;
             if (optionCpp.Checked)
             {
                 result += "Cpp picked. Result: ";
-                double additionResult = cppInterface.callCFunction(x, y);
-                result += additionResult;
+             //   double additionResult = cppInterface.callCFunction(x, y);
+              //  result += additionResult;
 
 
 
@@ -215,54 +244,157 @@ namespace filterWAV
             else if (optionAsm.Checked)
             {
                 result += "ASM picked. Result: ";
-                double substractionResult = asmInterface.callAsmFunction(x, y);
-                result += substractionResult;
+             //   double substractionResult = asmInterface.callAsmFunction(x, y);
+               // result += substractionResult;
             }
             MessageBox.Show(result);
+
+            handleThreads(sampleCount);
         }
 
-        private void radioButton1_CheckedChanged(object sender, EventArgs e)
+        private void threads1_CheckedChanged(object sender, EventArgs e)
         {
-
-        }
-
-        private void radioButton2_CheckedChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void radioButton4_CheckedChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void handleThreads(int numberOfThreads, int sampleCount)
-        {
-            int size = sampleCount;
-           
-           
-
             
-            float sectionSizeFloat = size / numberOfThreads;
+        }
+
+        private void threads2_CheckedChanged(object sender, EventArgs e)
+        {
+            
+        }
+
+        private void threads4_CheckedChanged(object sender, EventArgs e)
+        {
+            
+        }
+
+        private void threads8_CheckedChanged(object sender, EventArgs e)
+        {
+           
+        }
+
+
+        private void threads16_CheckedChanged(object sender, EventArgs e)
+        {
+         
+        }
+
+
+        private void handleThreads(uint sampleCount)
+        {
+
+               
+           if(threads1.Checked)
+           {
+                threadCount = 1;
+           } else if(threads2.Checked)
+           {
+                threadCount = 2;
+           } else if (threads4.Checked)
+           {
+                threadCount = 4;
+            }
+            else if (threads8.Checked)
+            {
+                threadCount = 8;
+            }
+            else if (threads16.Checked)
+            {
+                threadCount = 16;
+            }
+
+
+
+            float sectionSizeFloat = sampleCount / threadCount;
             uint sectionSize = (uint)Math.Ceiling(sectionSizeFloat);
-            uint lowerBoundry;
-            uint upperBoundry;
+
+            string msg = "";
+
+            Thread[] threadsArray = new Thread[threadCount];
+            object[] value = new object[threadCount];
+            for(int i = 0; i<threadCount-1;i++) {
+                    long bottomLimit = sectionSize * i;
+                    long upperToCheck = bottomLimit + sectionSize;
+                    long upperLimit = upperToCheck<sampleCount ? upperToCheck : sampleCount; 
+                    threadsArray[i] = new Thread(() => cppInterface.callCFunction(ref right, bottomLimit, upperLimit));
+
+                threadsArray[i].Start();
+
+
+            };
+          
+
+            for (int j = 0; j < threadCount-1; j++)
+            {
+                
+                threadsArray[j].Join();
+               
+            }
+
+
+            waveChartRight.Series.Clear();
+            int samplesPerPixel = left.Length / (2 * (int)waveChartLeft.ChartAreas[0].Position.Width);
+            int step = 750;
+            for (int i = 0; i < left.Length - step; i += step)
+            {
+                double leftLow = left[i];
+                double leftHigh = left[i];
+                double leftLowX = i;
+                double leftHighX = i;
+
+                double rightLow = left[i];
+                double rightHigh = left[i];
+                double rightLowX = i;
+                double rightHighX = i;
+
+                for (int j = 0; j < step; j++)
+                {
+
+                    if (left[i + j] < leftLow)
+                    {
+                        leftLow = left[i + j];
+                        leftLowX = i + j;
+                    }
+                    if (left[i + j] > leftHigh)
+                    {
+                        leftHigh = left[i + j];
+                        leftHighX = i + j;
+                    }
+                    if (right[i + j] < rightLow)
+                    {
+                        rightLow = right[i + j];
+                        rightLowX = i + j;
+                    }
+                    if (right[i + j] > rightHigh)
+                    {
+                        rightHigh = right[i + j];
+                        rightHighX = i + j;
+                    }
+
+                }
+
+             //   seriesL.Points.AddXY(leftLowX, leftLow);
+             //   seriesL.Points.AddXY(leftHighX, leftHigh);
+
+                rSeries.Points.AddXY(rightLowX, rightLow);
+                rSeries.Points.AddXY(rightHighX, rightHigh);
+
+
+            }
+
+            for (int k=0; k< threadCount-1; k++)
+            {
+                msg += "\n Thread: " + value[k];
+                MessageBox.Show(msg);
+            }
 
            
 
-            for (int i = 0; i < numberOfThreads; i++)
-            {
-               // divide sample table(s) for threads
-            }
+       
 
 
 
 
-
-            for (int i = 0; i < numberOfThreads; i++)
-            {
-               //join threds
-            }
+           
 
         }
     }

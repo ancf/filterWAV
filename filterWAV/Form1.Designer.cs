@@ -28,10 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea9 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Series series9 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea10 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Series series10 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
             this.progressBar = new System.Windows.Forms.ProgressBar();
             this.optionCpp = new System.Windows.Forms.RadioButton();
             this.optionAsm = new System.Windows.Forms.RadioButton();
@@ -43,12 +43,12 @@
             this.waveChartLeft = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.waveChartRight = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.threads16 = new System.Windows.Forms.RadioButton();
+            this.threads8 = new System.Windows.Forms.RadioButton();
+            this.threads4 = new System.Windows.Forms.RadioButton();
+            this.threads2 = new System.Windows.Forms.RadioButton();
+            this.threads1 = new System.Windows.Forms.RadioButton();
             this.runButton = new System.Windows.Forms.Button();
-            this.radioButton1 = new System.Windows.Forms.RadioButton();
-            this.radioButton2 = new System.Windows.Forms.RadioButton();
-            this.radioButton3 = new System.Windows.Forms.RadioButton();
-            this.radioButton4 = new System.Windows.Forms.RadioButton();
-            this.radioButton5 = new System.Windows.Forms.RadioButton();
             this.groupBoxLib.SuspendLayout();
             this.groupBoxInput.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.waveChartLeft)).BeginInit();
@@ -135,37 +135,37 @@
             // 
             // waveChartLeft
             // 
-            chartArea9.Name = "ChartArea1";
-            this.waveChartLeft.ChartAreas.Add(chartArea9);
+            chartArea1.Name = "ChartArea1";
+            this.waveChartLeft.ChartAreas.Add(chartArea1);
             this.waveChartLeft.Location = new System.Drawing.Point(19, 120);
             this.waveChartLeft.Name = "waveChartLeft";
-            series9.ChartArea = "ChartArea1";
-            series9.Name = "Series1";
-            this.waveChartLeft.Series.Add(series9);
+            series1.ChartArea = "ChartArea1";
+            series1.Name = "Series1";
+            this.waveChartLeft.Series.Add(series1);
             this.waveChartLeft.Size = new System.Drawing.Size(596, 132);
             this.waveChartLeft.TabIndex = 7;
             this.waveChartLeft.Text = "chart1";
             // 
             // waveChartRight
             // 
-            chartArea10.Name = "ChartArea1";
-            this.waveChartRight.ChartAreas.Add(chartArea10);
+            chartArea2.Name = "ChartArea1";
+            this.waveChartRight.ChartAreas.Add(chartArea2);
             this.waveChartRight.Location = new System.Drawing.Point(19, 258);
             this.waveChartRight.Name = "waveChartRight";
-            series10.ChartArea = "ChartArea1";
-            series10.Name = "Series1";
-            this.waveChartRight.Series.Add(series10);
+            series2.ChartArea = "ChartArea1";
+            series2.Name = "Series1";
+            this.waveChartRight.Series.Add(series2);
             this.waveChartRight.Size = new System.Drawing.Size(596, 132);
             this.waveChartRight.TabIndex = 8;
             this.waveChartRight.Text = "chart1";
             // 
             // groupBox1
             // 
-            this.groupBox1.Controls.Add(this.radioButton5);
-            this.groupBox1.Controls.Add(this.radioButton4);
-            this.groupBox1.Controls.Add(this.radioButton3);
-            this.groupBox1.Controls.Add(this.radioButton2);
-            this.groupBox1.Controls.Add(this.radioButton1);
+            this.groupBox1.Controls.Add(this.threads16);
+            this.groupBox1.Controls.Add(this.threads8);
+            this.groupBox1.Controls.Add(this.threads4);
+            this.groupBox1.Controls.Add(this.threads2);
+            this.groupBox1.Controls.Add(this.threads1);
             this.groupBox1.Controls.Add(this.runButton);
             this.groupBox1.Location = new System.Drawing.Point(221, 68);
             this.groupBox1.Name = "groupBox1";
@@ -173,6 +173,66 @@
             this.groupBox1.TabIndex = 9;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Number of threads";
+            // 
+            // threads16
+            // 
+            this.threads16.AutoSize = true;
+            this.threads16.Location = new System.Drawing.Point(154, 19);
+            this.threads16.Name = "threads16";
+            this.threads16.Size = new System.Drawing.Size(37, 17);
+            this.threads16.TabIndex = 9;
+            this.threads16.TabStop = true;
+            this.threads16.Text = "16";
+            this.threads16.UseVisualStyleBackColor = true;
+            this.threads16.CheckedChanged += new System.EventHandler(this.threads16_CheckedChanged);
+            // 
+            // threads8
+            // 
+            this.threads8.AutoSize = true;
+            this.threads8.Location = new System.Drawing.Point(117, 19);
+            this.threads8.Name = "threads8";
+            this.threads8.Size = new System.Drawing.Size(31, 17);
+            this.threads8.TabIndex = 8;
+            this.threads8.TabStop = true;
+            this.threads8.Text = "8";
+            this.threads8.UseVisualStyleBackColor = true;
+            this.threads8.CheckedChanged += new System.EventHandler(this.threads8_CheckedChanged);
+            // 
+            // threads4
+            // 
+            this.threads4.AutoSize = true;
+            this.threads4.Location = new System.Drawing.Point(80, 19);
+            this.threads4.Name = "threads4";
+            this.threads4.Size = new System.Drawing.Size(31, 17);
+            this.threads4.TabIndex = 7;
+            this.threads4.TabStop = true;
+            this.threads4.Text = "4";
+            this.threads4.UseVisualStyleBackColor = true;
+            this.threads4.CheckedChanged += new System.EventHandler(this.threads4_CheckedChanged);
+            // 
+            // threads2
+            // 
+            this.threads2.AutoSize = true;
+            this.threads2.Location = new System.Drawing.Point(43, 19);
+            this.threads2.Name = "threads2";
+            this.threads2.Size = new System.Drawing.Size(31, 17);
+            this.threads2.TabIndex = 6;
+            this.threads2.TabStop = true;
+            this.threads2.Text = "2";
+            this.threads2.UseVisualStyleBackColor = true;
+            this.threads2.CheckedChanged += new System.EventHandler(this.threads2_CheckedChanged);
+            // 
+            // threads1
+            // 
+            this.threads1.AutoSize = true;
+            this.threads1.Location = new System.Drawing.Point(6, 19);
+            this.threads1.Name = "threads1";
+            this.threads1.Size = new System.Drawing.Size(31, 17);
+            this.threads1.TabIndex = 5;
+            this.threads1.TabStop = true;
+            this.threads1.Text = "1";
+            this.threads1.UseVisualStyleBackColor = true;
+            this.threads1.CheckedChanged += new System.EventHandler(this.threads1_CheckedChanged);
             // 
             // runButton
             // 
@@ -182,64 +242,7 @@
             this.runButton.TabIndex = 4;
             this.runButton.Text = "Run";
             this.runButton.UseVisualStyleBackColor = true;
-            // 
-            // radioButton1
-            // 
-            this.radioButton1.AutoSize = true;
-            this.radioButton1.Location = new System.Drawing.Point(6, 19);
-            this.radioButton1.Name = "radioButton1";
-            this.radioButton1.Size = new System.Drawing.Size(31, 17);
-            this.radioButton1.TabIndex = 5;
-            this.radioButton1.TabStop = true;
-            this.radioButton1.Text = "1";
-            this.radioButton1.UseVisualStyleBackColor = true;
-            this.radioButton1.CheckedChanged += new System.EventHandler(this.radioButton1_CheckedChanged);
-            // 
-            // radioButton2
-            // 
-            this.radioButton2.AutoSize = true;
-            this.radioButton2.Location = new System.Drawing.Point(43, 19);
-            this.radioButton2.Name = "radioButton2";
-            this.radioButton2.Size = new System.Drawing.Size(31, 17);
-            this.radioButton2.TabIndex = 6;
-            this.radioButton2.TabStop = true;
-            this.radioButton2.Text = "2";
-            this.radioButton2.UseVisualStyleBackColor = true;
-            this.radioButton2.CheckedChanged += new System.EventHandler(this.radioButton2_CheckedChanged);
-            // 
-            // radioButton3
-            // 
-            this.radioButton3.AutoSize = true;
-            this.radioButton3.Location = new System.Drawing.Point(80, 19);
-            this.radioButton3.Name = "radioButton3";
-            this.radioButton3.Size = new System.Drawing.Size(31, 17);
-            this.radioButton3.TabIndex = 7;
-            this.radioButton3.TabStop = true;
-            this.radioButton3.Text = "4";
-            this.radioButton3.UseVisualStyleBackColor = true;
-            // 
-            // radioButton4
-            // 
-            this.radioButton4.AutoSize = true;
-            this.radioButton4.Location = new System.Drawing.Point(117, 19);
-            this.radioButton4.Name = "radioButton4";
-            this.radioButton4.Size = new System.Drawing.Size(31, 17);
-            this.radioButton4.TabIndex = 8;
-            this.radioButton4.TabStop = true;
-            this.radioButton4.Text = "8";
-            this.radioButton4.UseVisualStyleBackColor = true;
-            this.radioButton4.CheckedChanged += new System.EventHandler(this.radioButton4_CheckedChanged);
-            // 
-            // radioButton5
-            // 
-            this.radioButton5.AutoSize = true;
-            this.radioButton5.Location = new System.Drawing.Point(154, 19);
-            this.radioButton5.Name = "radioButton5";
-            this.radioButton5.Size = new System.Drawing.Size(37, 17);
-            this.radioButton5.TabIndex = 9;
-            this.radioButton5.TabStop = true;
-            this.radioButton5.Text = "16";
-            this.radioButton5.UseVisualStyleBackColor = true;
+            this.runButton.Click += new System.EventHandler(this.runButton_Click);
             // 
             // Form1
             // 
@@ -279,12 +282,12 @@
         private System.Windows.Forms.DataVisualization.Charting.Chart waveChartLeft;
         private System.Windows.Forms.DataVisualization.Charting.Chart waveChartRight;
         private System.Windows.Forms.GroupBox groupBox1;
-        private System.Windows.Forms.RadioButton radioButton1;
+        private System.Windows.Forms.RadioButton threads1;
         private System.Windows.Forms.Button runButton;
-        private System.Windows.Forms.RadioButton radioButton2;
-        private System.Windows.Forms.RadioButton radioButton4;
-        private System.Windows.Forms.RadioButton radioButton3;
-        private System.Windows.Forms.RadioButton radioButton5;
+        private System.Windows.Forms.RadioButton threads2;
+        private System.Windows.Forms.RadioButton threads8;
+        private System.Windows.Forms.RadioButton threads4;
+        private System.Windows.Forms.RadioButton threads16;
     }
 }
 

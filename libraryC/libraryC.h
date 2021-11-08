@@ -8,5 +8,5 @@
 
 
 
-extern "C" LIBRARYC_API double FilterC(double x, double y);
+extern "C" LIBRARYC_API void FilterC(double * tab, long min, long max);
 
