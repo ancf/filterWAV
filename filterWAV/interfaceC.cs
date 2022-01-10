@@ -10,13 +10,20 @@ namespace filterWAV
     unsafe class interfaceC
     {
         [DllImport("LIBRARYC.dll", EntryPoint = "FilterC", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl )]
-        private static extern void FilterC(ref double[] tab, long min, long max);
+        private static extern void FilterC(ref double[] tab, ref double[] copy, long min, long max);
    
 
-        public void callCFunction(ref double[] tab, long min, long max)
+        public void callCFunction(ref double[] tab, ref double[] copy, long min, long max)
         {
-            FilterC(ref tab, min, max);
-           // return result;
+            Console.WriteLine(tab[0]);
+            Console.WriteLine(copy[1]);
+            Console.WriteLine(tab[2]);
+            FilterC(ref tab, ref copy, min, max);
+
+            Console.WriteLine(tab[0]);
+            Console.WriteLine(tab[1]);
+            Console.WriteLine(tab[2]);
+            // return result;
         }
     }
 }

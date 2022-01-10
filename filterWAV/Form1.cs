@@ -311,11 +311,20 @@ namespace filterWAV
 
             Thread[] threadsArray = new Thread[threadCount];
             object[] value = new object[threadCount];
-            for(int i = 0; i<threadCount-1;i++) {
+            for(int i = 0; i<threadCount;i++) {
                     long bottomLimit = sectionSize * i;
                     long upperToCheck = bottomLimit + sectionSize;
-                    long upperLimit = upperToCheck<sampleCount ? upperToCheck : sampleCount; 
-                    threadsArray[i] = new Thread(() => cppInterface.callCFunction(ref right, bottomLimit, upperLimit));
+
+
+                long upperLimit = upperToCheck<sampleCount ? upperToCheck : sampleCount;
+                Console.WriteLine(bottomLimit);
+                Console.WriteLine(upperLimit);
+                Console.WriteLine(right[0]);
+                Console.WriteLine(right[1]);
+                Console.WriteLine(right[2]);
+                double[] copy = (double[])right.Clone();
+
+                threadsArray[i] = new Thread(() => cppInterface.callCFunction(ref right, ref copy, bottomLimit, upperLimit));
 
                 threadsArray[i].Start();
 
