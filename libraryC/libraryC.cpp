@@ -6,18 +6,18 @@
 #include "libraryC.h"
 
 
-void FilterC(double * tab, double * copy, long min, long max)
+void filterC(int * tab, int * copy, unsigned int min, unsigned int max)
 {
    
   
 
-    for (int i = min; i < max; i++) {
-        double sum = 0;
+    for (int i = min; i < max-4; i++) {
+        long long sum = 0;
         
-        for (int j = 0; j < 8; j++) {
-            sum += copy[i - j];
+        for (int j = 0; j < 4; j++) {
+            sum += tab[i + j];
         }
-        tab[i] = sum / 8;
+       copy[i+4] = sum / 4;
        
     }
 }
