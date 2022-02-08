@@ -151,11 +151,11 @@
     <ClCompile Include="filterWAV.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="filterWAVcpp.rc" />
+    <Image Include="filterWAV.ico" />
+    <Image Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="filterWAVcpp.ico" />
-    <Image Include="small.ico" />
+    <ResourceCompile Include="filterWAV.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -32,15 +32,10 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="filterWAVcpp.rc">
-      <Filter>Pliki zasobów</Filter>
-    </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
     <Image Include="small.ico">
       <Filter>Pliki zasobów</Filter>
     </Image>
-    <Image Include="filterWAVcpp.ico">
+    <Image Include="filterWAV.ico">
       <Filter>Pliki zasobów</Filter>
     </Image>
   </ItemGroup>
@@ -51,5 +46,10 @@
     <ClCompile Include="FileWAV.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="filterWAV.rc">
+      <Filter>Pliki zasobów</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>
