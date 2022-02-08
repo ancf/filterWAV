@@ -8,5 +8,5 @@
 
 
 
-extern "C" LIBRARYC_API void filterC(int * tab, int * copy, unsigned int min, unsigned int max);
+extern "C" LIBRARYC_API void filterC(short * tab, short * copy, unsigned int min, unsigned int max);
 

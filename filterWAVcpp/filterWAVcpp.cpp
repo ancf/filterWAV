@@ -35,8 +35,8 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 FILE* wavFile;
 FILE* wavOutputFile;
 std::mutex m;
-typedef void (__stdcall *FILTER)(int* tab, int* copy, unsigned int min, unsigned int max);
-typedef void   (*FILTERC)(int* tab, int* copy, unsigned int min, unsigned int max);
+typedef void (__stdcall *FILTER)(short* tab, short* copy, unsigned int min, unsigned int max);
+typedef void   (*FILTERC)(short* tab, short* copy, unsigned int min, unsigned int max);
 
 
 
@@ -48,17 +48,20 @@ protected:
 	char wave[4];
 	byte fmt[4];
 	byte formatByteSize[4];
+	int formatType;
 	int channels;
 	int sampleRate;
 	int bytesPerSecond;
 	int bytesPerSample;
+	
 	int bitsPerSample;
 	char data[4];
 	int dataSize;
-	int* left;
-	int* right;
-	int* leftOriginal;
-	int* rightOriginal;
+	short* left;
+	short* right;
+	short* leftOriginal;
+	short* rightOriginal;
+	int* rawData;
 	int sampleCount;
 public: FileWAV(byte* wav) {
 	for (int i = 0; i < 4; i++) {
@@ -84,7 +87,9 @@ public: FileWAV(byte* wav) {
 	for (int i = 0; i < 4; i++) {
 		formatByteSize[i] = wav[16 + i];
 	};
+	byte formatTypeArray[2] = { wav[20], wav[21] };
 
+	memcpy(&formatType, formatTypeArray, sizeof(short));
 	byte channelsArray[2] = { wav[22], wav[23] };
 
 	memcpy(&channels, channelsArray, sizeof(short));
@@ -140,18 +145,18 @@ public: FileWAV(byte* wav) {
 
 
 
-	left = new int[ceil(samples / 2)];
-	leftOriginal = new int[ceil(samples / 2)];
+	left = new short[samples];
+	leftOriginal = new short[samples];
 	if (channels == 2) { // should also check if more than 2 channels
-		right = new int[ceil(samples / 2)];
-		rightOriginal = new int[ceil(samples / 2)];
+		right = new short[samples];
+		rightOriginal = new short[samples];
 	}
 	else {
 		right = NULL;
 		rightOriginal = NULL;
 	}
 	int i = 0;
-	while (pos < samples * 2)
+	while (pos < samples * 4)
 	{
 
 
@@ -159,7 +164,7 @@ public: FileWAV(byte* wav) {
 		leftOriginal[i] = bytesToInteger(wav[pos], wav[pos + 1]);
 
 		pos += 2;
-		if (channels == 2)
+		if ((this->channels) == 2)
 		{
 
 
@@ -170,6 +175,7 @@ public: FileWAV(byte* wav) {
 		}
 		i++;
 	}
+	
 
 
 }
@@ -181,7 +187,7 @@ public: FileWAV(byte* wav) {
 			return this->dataSize;
 
 		}
-		int* getLeft() {
+		short* getLeft() {
 			return this->left;
 		}
 		int getSampleCount() {
@@ -196,13 +202,20 @@ public: FileWAV(byte* wav) {
 		int getChannels() {
 			return this->channels;
 		}
-		void writeTestResultsToTxt(int* tab, int* copy, int size, int testTime) {
+		void writeTestResultsToTxt(short* tab, short* copy, int size, int testTime, std::wstring filepath) {
+			std::wstring pathWstring = filepath + L"\\original.txt";
+			LPWSTR path = const_cast<LPWSTR>(pathWstring.c_str());
+
+			std::wstring pathModifiedWstring = filepath + L"\\modified.txt";
+			LPWSTR pathModified = const_cast<LPWSTR>(pathModifiedWstring.c_str());
+
+
 			HANDLE originalFile = CreateFile(
-				L"C:\\Users\\Sum\\Desktop\\Desktop\\original.txt",
+				path,
 				GENERIC_WRITE,
 				FILE_SHARE_READ,
 				NULL,
-				CREATE_NEW,
+				OPEN_ALWAYS,
 				FILE_ATTRIBUTE_NORMAL,
 				NULL);
 
@@ -214,6 +227,8 @@ public: FileWAV(byte* wav) {
 
 			
 			std::string strTextOriginal = "Elapsed time: " + std::to_string(testTime);
+			strTextOriginal += "\n";
+			strTextOriginal += "Bytes per sample: " + std::to_string(this->bytesPerSample);
 			strTextOriginal += "\n";
 			for (int i = 0; i < size; i++) {
 				strTextOriginal += std::to_string(copy[offset + i]) + "\n";
@@ -230,11 +245,11 @@ public: FileWAV(byte* wav) {
 			CloseHandle(originalFile);
 
 			HANDLE modifiedFile = CreateFile(
-				L"C:\\Users\\Sum\\Desktop\\Desktop\\modified.txt",
+				pathModified,
 				GENERIC_WRITE,
 				FILE_SHARE_READ,
 				NULL,
-				CREATE_NEW,
+				OPEN_ALWAYS,
 				FILE_ATTRIBUTE_NORMAL,
 				NULL);
 
@@ -260,9 +275,14 @@ public: FileWAV(byte* wav) {
 			CloseHandle(modifiedFile);
 		}
 
-		void divideIntoThreads(unsigned int numberOfThreads, bool useAsm) {
-
+		void divideIntoThreads(unsigned int numberOfThreads, bool useAsm, LPWSTR filepath) {
+			std::wstring temp(filepath);
 			
+			size_t index = temp.rfind('\\');
+
+			std::wstring workspace = temp.substr(0, index);
+			
+
 			HINSTANCE dllHandleC = NULL;
 			HINSTANCE dllHandleAsm = NULL;
 			dllHandleC = LoadLibrary(L"libraryC.dll");
@@ -324,28 +344,113 @@ public: FileWAV(byte* wav) {
 				threads[i].join();
 			}
 
+			std::vector < std::thread > threadsL;
+
+		//	auto time_begin = std::chrono::high_resolution_clock::now();
+			if (useAsm) {
+				threadsL.push_back(std::thread(filter, leftOriginal, left, 0, sectionSize));
+				for (int i = 1; i < numberOfThreads; i++) {
+					lowerBoundry = i * sectionSize;
+					upperBoundry = min((i + 1) * sectionSize - 1, size);
+
+					threadsL.push_back(std::thread(filter, leftOriginal, left, lowerBoundry, upperBoundry));
+
+				}
+			}
+			else {
+				threadsL.push_back(std::thread(filterC, leftOriginal, left, 0, sectionSize));
+				for (int i = 1; i < numberOfThreads; i++) {
+					lowerBoundry = i * sectionSize;
+					upperBoundry = min((i + 1) * sectionSize - 1, size);
+
+					threadsL.push_back(std::thread(filterC, leftOriginal, left, lowerBoundry, upperBoundry));
+
+				}
+			}
+
+
+
+
+
+
+			for (int i = 0; i < numberOfThreads; i++) {
+				threadsL[i].join();
+			}
+
 			auto time_end = std::chrono::high_resolution_clock::now();
 
 			auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(time_end - time_begin);
 
 			
 
-			writeTestResultsToTxt(right, rightOriginal, size, elapsedTime.count());
+			writeTestResultsToTxt(right, rightOriginal, size, elapsedTime.count(), workspace);
+			write(workspace);
+		}
+
+		void write(std::wstring workspace)
+		{
+			std::wstring nameAndExt = L"\\output.wav";
+			std::ofstream file(workspace+nameAndExt, std::ios::binary);
+			const uint32_t size_ui32 = sizeof(uint32_t);
+			const uint32_t size_ui16 = sizeof(uint16_t);
+
+			rawData = new int[this->sampleCount];
+			for (int i = 0; i < ceil(this->sampleCount/2); i++) {
+				rawData[i*2] = left[i];
+				rawData[i*2 + 1] = right[i];
+			};
+
+		//	rawData.length()
+			
+			if (file.good())
+			{
+				file.flush();
+				
+				file.write(this->riff, 4 * sizeof(char));
+				file.write(reinterpret_cast<const char*>(&this->fileSize), size_ui32);
+				file.write(this->wave, 4*sizeof(char));
+				file.write(reinterpret_cast<const char*>(&this->fmt), 4*sizeof(char));
+				file.write(reinterpret_cast<const char*>(&this->formatByteSize), size_ui32);
+				file.write(reinterpret_cast<const char*>(&this->formatType), size_ui16);
+				file.write(reinterpret_cast<const char*>(&this->channels), size_ui16);
+				file.write(reinterpret_cast<const char*>(&this->sampleRate), size_ui32);
+				file.write(reinterpret_cast<const char*>(&this->bytesPerSecond), size_ui32);
+				file.write(reinterpret_cast<const char*>(&this->bytesPerSample), size_ui16);
+				file.write(reinterpret_cast<const char*>(&this->bitsPerSample), size_ui16);
+				file.write(this->data, 4*sizeof(char));
+				file.write(reinterpret_cast<const char*>(&this->dataSize), size_ui32);
+			//	file.write(reinterpret_cast<const char*>(&this->rawData), 100000); 
+				for (int i = 0; i < this->sampleCount; i++) {
+					file.write(reinterpret_cast<const char*>(&this->left[i]), size_ui16);
+					file.write(reinterpret_cast<const char*>(&this->right[i]), size_ui16);
+				//	rawData[i * 2 + 1] = right[i];
+				};
+				file.close();
+			}
 		}
 private:
-	static double bytesToInteger(byte firstByte, byte secondByte)
+	static short bytesToInteger(byte firstByte, byte secondByte)
 	{
 
 		short s = (short)((secondByte << 8) | firstByte);
-		return (int)s;
+		return s;
 	}
+
+	static int bytesToInteger4(byte firstByte, byte secondByte, byte thirdByte, byte fourthByte)
+	{
+
+		long result = (((firstByte << 8 & secondByte) << 8 & thirdByte) << 8) & fourthByte;
+		result = result & 0xFFFFFFFF;
+		return result;
+	}
+
 };
 
 
 
 
 
-unsigned long loadWAV(FILE** wavFile, BYTE** samples, bool useAsm, int threadCount) {
+unsigned long loadWAV(FILE** wavFile, BYTE** samples, bool useAsm, int threadCount, LPWSTR filepath) {
     
 
     fseek(*wavFile, 0, SEEK_END);
@@ -364,8 +469,8 @@ unsigned long loadWAV(FILE** wavFile, BYTE** samples, bool useAsm, int threadCou
 
     FileWAV file(*samples);
     
-    file.divideIntoThreads(threadCount, useAsm);
-    
+    file.divideIntoThreads(threadCount, useAsm, filepath);
+   
 
     fclose(*wavFile);
 
@@ -602,9 +707,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 									else if (IsDlgButtonChecked(hWnd, ID_OPTION_64)) {
 										numberOfThreads = 64;
 									}
-                                    unsigned int size = loadWAV(&wavFile, &samples, useAsm, numberOfThreads);
+                                    unsigned int size = loadWAV(&wavFile, &samples, useAsm, numberOfThreads, pszFilePath);
                                     wchar_t* temp = new wchar_t[128];
                                     wsprintfW(temp, L"File path \n Size: %d", size);
+								
                                     MessageBoxW(NULL, pszFilePath, temp, MB_OK);
                                     CoTaskMemFree(pszFilePath);
                                 }
