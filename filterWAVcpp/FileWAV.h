@@ -1,16 +1,14 @@
 #pragma once
 #include <stdio.h>
 #include <windows.h>
-//#include "resource.h"
-//#include <shobjidl.h> 
 #include <string>
 #include <thread>
 #include <vector>
-//#include <sstream>
-//#include <mutex>
 #include <chrono>
 #include <fstream>
 #include <stdint.h>
+#include <variant>
+#include <cassert>
 
 
 typedef void(__stdcall * FILTERASM)(short * tab, short * copy, unsigned int min, unsigned int max);
@@ -47,7 +45,7 @@ public:
 	int getBitsPerSample();
 	int getChannels();
 	void processInThreads(unsigned int numberOfThreads, bool useAsm, LPWSTR filepath);
-	void writeTestResultsToTxt(short * tab, short * copy, int size, int testTime, std::wstring filepath);
+	void writeTestResultsToTxt(short * tab, short * copy, int size, int testTime, std::wstring filepath, bool isMono, bool isRight);
 	std::wstring getDirectory(LPCWSTR filepath);
 	void write(std::wstring workspace);
 private:

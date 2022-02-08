@@ -118,82 +118,141 @@ void FileWAV::processInThreads(unsigned int numberOfThreads, bool useAsm, LPWSTR
 		dllHandleAsm = LoadLibrary(L"libraryASM.dll");
 		unsigned int size = ceil(sampleCount / 2);
 
-		FILTERASM filterASM;
-		FILTERC filterC;
+		auto time_begin = std::chrono::high_resolution_clock::now();
 
-		if (useAsm) {
-			filterASM = (FILTERASM)GetProcAddress(dllHandleAsm, "filterASM");
-		}
-		else {
-			filterC = (FILTERC)GetProcAddress(dllHandleC, "filterC");
-		}
 		std::vector < std::thread > threads;
 		float sectionSizeFloat = size / numberOfThreads;
-		unsigned int sectionSize = ceil(sectionSizeFloat);
+		unsigned int sectionSize = ceil(sectionSizeFloat / this->channels);
 		unsigned int lowerBoundry;
 		unsigned int upperBoundry;
-
-		auto time_begin = std::chrono::high_resolution_clock::now();
+	
+		
 		if (useAsm) {
-			threads.push_back(std::thread(filterASM, rightOriginal, right, 0, sectionSize));
-			for (int i = 1; i < numberOfThreads; i++) {
-				lowerBoundry = i * sectionSize;
-				upperBoundry = min((i + 1) * sectionSize - 1, size);
-
-				threads.push_back(std::thread(filterASM, rightOriginal, right, lowerBoundry, upperBoundry));
+			FILTERASM filter;
+			filter = (FILTERASM)GetProcAddress(dllHandleAsm, "filterASM");
+			if (numberOfThreads == 1) {
+				if (this->channels == 2) {
+					threads.push_back(std::thread(filter, leftOriginal, left, lowerBoundry, upperBoundry));
+					threads[0].join();
+					threads.pop_back();
+					threads.push_back(std::thread(filter, rightOriginal, right, 0, sectionSize));
+					threads[0].join();
+					threads.pop_back();
+				}
+				else {
+					threads.push_back(std::thread(filter, leftOriginal, left, lowerBoundry, upperBoundry));
+					threads[0].join();
+				}
+			}
+			else {
+				if (this->channels == 2) {
+					for (int i = 0; i < (numberOfThreads / 2); i++) {
+						lowerBoundry = i * sectionSize;
+						upperBoundry = min((i + 1) * sectionSize - 1, size);
+						threads.push_back(std::thread(filter, leftOriginal, left, lowerBoundry, upperBoundry));
+					}
+					for (int i = 0; i < (numberOfThreads / 2); i++) {
+						lowerBoundry = i * sectionSize;
+						upperBoundry = min((i + 1) * sectionSize - 1, size);
+						threads.push_back(std::thread(filter, rightOriginal, right, lowerBoundry, upperBoundry));
+					}
+					for (int i = 0; i < numberOfThreads; i++) {
+						threads[i].join();
+					}
+				}
+				else {
+					for (int i = 0; i < (numberOfThreads / 2); i++) {
+						lowerBoundry = i * sectionSize;
+						upperBoundry = min((i + 1) * sectionSize - 1, size);
+						threads.push_back(std::thread(filter, leftOriginal, left, lowerBoundry, upperBoundry));
+					}
+					for (int i = 0; i < numberOfThreads; i++) {
+						threads[i].join();
+					}
+				}
 			}
 		}
 		else {
-			threads.push_back(std::thread(filterC, rightOriginal, right, 0, sectionSize));
-			for (int i = 1; i < numberOfThreads; i++) {
-				lowerBoundry = i * sectionSize;
-				upperBoundry = min((i + 1) * sectionSize - 1, size);
-				threads.push_back(std::thread(filterC, rightOriginal, right, lowerBoundry, upperBoundry));
+			FILTERC filter;
+			filter = (FILTERC)GetProcAddress(dllHandleC, "filterC");
+			if (numberOfThreads == 1) {
+				if (this->channels == 2) {
+					threads.push_back(std::thread(filter, leftOriginal, left, lowerBoundry, upperBoundry));
+					threads[0].join();
+					threads.pop_back();
+					threads.push_back(std::thread(filter, rightOriginal, right, 0, sectionSize));
+					threads[0].join();
+					threads.pop_back();
+				}
+				else {
+					threads.push_back(std::thread(filter, leftOriginal, left, lowerBoundry, upperBoundry));
+					threads[0].join();
+				}
+			}
+			else {
+				if (this->channels == 2) {
+					for (int i = 0; i < (numberOfThreads / 2); i++) {
+						lowerBoundry = i * sectionSize;
+						upperBoundry = min((i + 1) * sectionSize - 1, size);
+						threads.push_back(std::thread(filter, leftOriginal, left, lowerBoundry, upperBoundry));
+					}
+					for (int i = 0; i < (numberOfThreads / 2); i++) {
+						lowerBoundry = i * sectionSize;
+						upperBoundry = min((i + 1) * sectionSize - 1, size);
+						threads.push_back(std::thread(filter, rightOriginal, right, lowerBoundry, upperBoundry));
+					}
+					for (int i = 0; i < numberOfThreads; i++) {
+						threads[i].join();
+					}
+				}
+				else {
+					for (int i = 0; i < (numberOfThreads / 2); i++) {
+						lowerBoundry = i * sectionSize;
+						upperBoundry = min((i + 1) * sectionSize - 1, size);
+						threads.push_back(std::thread(filter, leftOriginal, left, lowerBoundry, upperBoundry));
+					}
+					for (int i = 0; i < numberOfThreads; i++) {
+						threads[i].join();
+					}
+				}
 			}
 		}
-
-		for (int i = 0; i < numberOfThreads; i++) {
-			threads[i].join();
-		}
-
-		std::vector < std::thread > threadsL;
-
-		if (useAsm) {
-			threadsL.push_back(std::thread(filterASM, leftOriginal, left, 0, sectionSize));
-			for (int i = 1; i < numberOfThreads; i++) {
-				lowerBoundry = i * sectionSize;
-				upperBoundry = min((i + 1) * sectionSize - 1, size);
-
-				threadsL.push_back(std::thread(filterASM, leftOriginal, left, lowerBoundry, upperBoundry));
-
-			}
-		}
-		else {
-			threadsL.push_back(std::thread(filterC, leftOriginal, left, 0, sectionSize));
-			for (int i = 1; i < numberOfThreads; i++) {
-				lowerBoundry = i * sectionSize;
-				upperBoundry = min((i + 1) * sectionSize - 1, size);
-
-				threadsL.push_back(std::thread(filterC, leftOriginal, left, lowerBoundry, upperBoundry));
-			}
-		}
-
-		for (int i = 0; i < numberOfThreads; i++) {
-			threadsL[i].join();
-		}
-
+		
 		auto time_end = std::chrono::high_resolution_clock::now();
 		auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(time_end - time_begin);
-
-		writeTestResultsToTxt(right, rightOriginal, size, elapsedTime.count(), workspace);
+		
+		if(this->channels == 2){
+			writeTestResultsToTxt(left, leftOriginal, size, elapsedTime.count(), workspace, 0, 0);
+			writeTestResultsToTxt(right, rightOriginal, size, elapsedTime.count(), workspace, 0, 1);
+		}
+		else {
+			writeTestResultsToTxt(right, rightOriginal, size, elapsedTime.count(), workspace, 1, 0);
+		}
+	
 		write(workspace);
 	}
 
-void FileWAV::writeTestResultsToTxt(short * tab, short * copy, int size, int testTime, std::wstring filepath) {
-		std::wstring pathWstring = filepath + L"\\original.txt";
-		LPWSTR path = const_cast <LPWSTR> (pathWstring.c_str());
+void FileWAV::writeTestResultsToTxt(short * tab, short * copy, int size, int testTime, std::wstring filepath, bool isMono, bool isRight) {
+		std::wstring pathWstring;
+		std::wstring pathModifiedWstring;
 
-		std::wstring pathModifiedWstring = filepath + L"\\modified.txt";
+		if (isMono) {
+			pathWstring = filepath + L"\\original.txt";
+			pathModifiedWstring = filepath + L"\\modified.txt";
+		}
+		else {
+			if (isRight) {
+				pathWstring = filepath + L"\\originalRight.txt";
+				pathModifiedWstring = filepath + L"\\modifiedRight.txt";
+			}
+			else {
+				pathWstring = filepath + L"\\originalLeft.txt";
+				pathModifiedWstring = filepath + L"\\modifiedLeft.txt";
+			}
+		}
+	
+		
+		LPWSTR path = const_cast <LPWSTR> (pathWstring.c_str());
 		LPWSTR pathModified = const_cast <LPWSTR> (pathModifiedWstring.c_str());
 
 		HANDLE originalFile = CreateFile(
@@ -272,8 +331,6 @@ void FileWAV::write(std::wstring workspace) {
 			rawData[i * 2] = left[i];
 			rawData[i * 2 + 1] = right[i];
 		};
-
-		//	rawData.length()
 
 		if (file.good()) {
 			file.flush();
