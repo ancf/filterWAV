@@ -24,6 +24,7 @@
     <ProjectGuid>{2eb0b0b5-73ac-40ef-b2a9-1ef3dea7f64e}</ProjectGuid>
     <RootNamespace>filterWAVcpp</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.20348.0</WindowsTargetPlatformVersion>
+    <ProjectName>filterWAV</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -139,13 +140,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="filterWAVcpp.h" />
+    <ClInclude Include="FileWAV.h" />
+    <ClInclude Include="filterWAV.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="filterWAVcpp.cpp" />
+    <ClCompile Include="FileWAV.cpp" />
+    <ClCompile Include="filterWAV.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="filterWAVcpp.rc" />
