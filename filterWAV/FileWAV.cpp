@@ -51,14 +51,26 @@ FileWAV::FileWAV(byte * wav) {
 		memcpy(&bitsPerSample, bitsPerSampleArray, sizeof(short));
 		for (int i = 0; i < 4; i++) {
 			data[i] = (char)wav[36 + i];
-		};
+		}; 
+		unsigned int offset = 0;
+		if (data[0] != 'd' || data[1] != 'a' || data[2] != 't' || data[3] != 'a' ) {
+			offset = 4;
+			while (!((char)wav[36 + offset] == 'd' && (char)wav[36 + offset + 1] == 'a' && (char)wav[36 + offset + 2] == 't' && (char)wav[36 + offset + 3] == 'a')) {
+				offset++;
+			}
+			data[0] = (char)wav[36 + offset];
+			data[1] = (char)wav[36 + offset + 1];
+			data[2] = (char)wav[36 + offset + 2];
+			data[3] = (char)wav[36 + offset + 3];
+
+		}
 		byte dataSizeArray[4];
 		for (int i = 0; i < 4; i++) {
-			dataSizeArray[i] = wav[40 + i];
+			dataSizeArray[i] = wav[40 + i + offset];
 		};
 		memcpy(&dataSize, dataSizeArray, sizeof(int));
 
-		int pos = 44;
+		int pos = 44 + offset;
 		unsigned int samples = (unsigned int)dataSize / ((unsigned int)channels * ((unsigned int)bitsPerSample / 8));
 		sampleCount = samples;
 
@@ -86,6 +98,12 @@ FileWAV::FileWAV(byte * wav) {
 			i++;
 		}
 	}
+FileWAV::~FileWAV() {
+	delete[] rightOriginal;
+	delete[] right;
+	delete[] leftOriginal;
+	delete[] left;
+}
 int FileWAV::getFileSize() {
 		return this->fileSize;
 	}
@@ -107,7 +125,7 @@ int FileWAV::getBitsPerSample() {
 int FileWAV::getChannels() {
 		return this->channels;
 	}
-void FileWAV::processInThreads(unsigned int numberOfThreads, bool useAsm, LPWSTR filepath) {
+long long FileWAV::processInThreads(unsigned int numberOfThreads, bool useAsm, LPWSTR filepath, bool writeSamples) {
 		std::wstring temp(filepath);
 		size_t index = temp.rfind('\\');
 		std::wstring workspace = temp.substr(0, index);
@@ -121,8 +139,8 @@ void FileWAV::processInThreads(unsigned int numberOfThreads, bool useAsm, LPWSTR
 		auto time_begin = std::chrono::high_resolution_clock::now();
 
 		std::vector < std::thread > threads;
-		float sectionSizeFloat = size / numberOfThreads;
-		unsigned int sectionSize = ceil(sectionSizeFloat / this->channels);
+		float sectionSizeFloat = size / (numberOfThreads / this->channels);
+		unsigned int sectionSize = ceil(sectionSizeFloat);
 		unsigned int lowerBoundry;
 		unsigned int upperBoundry;
 	
@@ -132,7 +150,7 @@ void FileWAV::processInThreads(unsigned int numberOfThreads, bool useAsm, LPWSTR
 			filter = (FILTERASM)GetProcAddress(dllHandleAsm, "filterASM");
 			if (numberOfThreads == 1) {
 				if (this->channels == 2) {
-					threads.push_back(std::thread(filter, leftOriginal, left, lowerBoundry, upperBoundry));
+					threads.push_back(std::thread(filter, leftOriginal, left, 0, sectionSize));
 					threads[0].join();
 					threads.pop_back();
 					threads.push_back(std::thread(filter, rightOriginal, right, 0, sectionSize));
@@ -149,6 +167,7 @@ void FileWAV::processInThreads(unsigned int numberOfThreads, bool useAsm, LPWSTR
 					for (int i = 0; i < (numberOfThreads / 2); i++) {
 						lowerBoundry = i * sectionSize;
 						upperBoundry = min((i + 1) * sectionSize - 1, size);
+						printf("%d", upperBoundry);
 						threads.push_back(std::thread(filter, leftOriginal, left, lowerBoundry, upperBoundry));
 					}
 					for (int i = 0; i < (numberOfThreads / 2); i++) {
@@ -177,7 +196,7 @@ void FileWAV::processInThreads(unsigned int numberOfThreads, bool useAsm, LPWSTR
 			filter = (FILTERC)GetProcAddress(dllHandleC, "filterC");
 			if (numberOfThreads == 1) {
 				if (this->channels == 2) {
-					threads.push_back(std::thread(filter, leftOriginal, left, lowerBoundry, upperBoundry));
+					threads.push_back(std::thread(filter, leftOriginal, left, 0, sectionSize));
 					threads[0].join();
 					threads.pop_back();
 					threads.push_back(std::thread(filter, rightOriginal, right, 0, sectionSize));
@@ -221,18 +240,23 @@ void FileWAV::processInThreads(unsigned int numberOfThreads, bool useAsm, LPWSTR
 		auto time_end = std::chrono::high_resolution_clock::now();
 		auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(time_end - time_begin);
 		
-		if(this->channels == 2){
-			writeTestResultsToTxt(left, leftOriginal, size, elapsedTime.count(), workspace, 0, 0);
-			writeTestResultsToTxt(right, rightOriginal, size, elapsedTime.count(), workspace, 0, 1);
+		if (writeSamples) {
+			if (this->channels == 2) {
+				writeTestResultsToTxt(left, leftOriginal, size, workspace, 0, 0);
+				writeTestResultsToTxt(right, rightOriginal, size, workspace, 0, 1);
+			}
+			else {
+				writeTestResultsToTxt(right, rightOriginal, size, workspace, 1, 0);
+			}
 		}
-		else {
-			writeTestResultsToTxt(right, rightOriginal, size, elapsedTime.count(), workspace, 1, 0);
-		}
+		
+		
 	
 		write(workspace);
+		return elapsedTime.count();
 	}
 
-void FileWAV::writeTestResultsToTxt(short * tab, short * copy, int size, int testTime, std::wstring filepath, bool isMono, bool isRight) {
+void FileWAV::writeTestResultsToTxt(short * tab, short * copy, int size, std::wstring filepath, bool isMono, bool isRight) {
 		std::wstring pathWstring;
 		std::wstring pathModifiedWstring;
 
@@ -269,10 +293,7 @@ void FileWAV::writeTestResultsToTxt(short * tab, short * copy, int size, int tes
 		}
 		unsigned int offset = 0;
 
-		std::string strTextOriginal = "Elapsed time: " + std::to_string(testTime);
-		strTextOriginal += "\n";
-		strTextOriginal += "Bytes per sample: " + std::to_string(this->bytesPerSample);
-		strTextOriginal += "\n";
+		std::string strTextOriginal = "";
 		for (int i = 0; i < size; i++) {
 			strTextOriginal += std::to_string(copy[offset + i]) + "\n";
 		}
@@ -326,11 +347,7 @@ void FileWAV::write(std::wstring workspace) {
 		const uint32_t size_ui32 = sizeof(uint32_t);
 		const uint32_t size_ui16 = sizeof(uint16_t);
 
-		rawData = new int[this->sampleCount];
-		for (int i = 0; i < ceil(this->sampleCount / 2); i++) {
-			rawData[i * 2] = left[i];
-			rawData[i * 2 + 1] = right[i];
-		};
+		
 
 		if (file.good()) {
 			file.flush();
@@ -361,8 +378,10 @@ void FileWAV::write(std::wstring workspace) {
 			for (int i = 0; i < this->sampleCount; i++) {
 				file.write(reinterpret_cast <
 					const char *> (&this->left[i]), size_ui16);
-				file.write(reinterpret_cast <
-					const char *> (&this->right[i]), size_ui16);
+				if (this->channels == 2) {
+					file.write(reinterpret_cast <
+						const char *> (&this->right[i]), size_ui16);
+				}
 			};
 			file.close();
 		}

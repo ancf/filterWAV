@@ -18,6 +18,9 @@
 #define ID_BUTTON 10
 #define ID_CONFIRM 11
 
+#define ID_OPTION_Y 12
+#define ID_OPTION_N 13
+
 HINSTANCE hInst;
 WCHAR szTitle[MAX_LOADSTRING];
 WCHAR szWindowClass[MAX_LOADSTRING];
@@ -32,7 +35,7 @@ FILE * wavOutputFile;
 
 
 
-unsigned long loadWAV(FILE ** wavFile, BYTE ** samples, bool useAsm, int threadCount, LPWSTR filepath) {
+long long loadWAV(FILE ** wavFile, BYTE ** samples, bool useAsm, int threadCount, LPWSTR filepath, bool writeSamples) {
 	fseek(*wavFile, 0, SEEK_END);
 	unsigned long fsize = ftell(*wavFile);
 	rewind(*wavFile);
@@ -44,11 +47,14 @@ unsigned long loadWAV(FILE ** wavFile, BYTE ** samples, bool useAsm, int threadC
 	}
 
 	fread_s(*samples, fsize + 1, 1, fsize, *wavFile);
-	FileWAV file(*samples);
-	file.processInThreads(threadCount, useAsm, filepath);
+	long long elapsedTime;
+	
+	FileWAV * file = new FileWAV(*samples);
+	elapsedTime = file->processInThreads(threadCount, useAsm, filepath, writeSamples);
+	delete file;
 	fclose(*wavFile);
 
-	return file.getDataSize();
+	return elapsedTime;
 }
 
 
@@ -131,13 +137,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 	case WM_CREATE:
 		CreateWindowW(L"Button", L"Choose mode",
 			WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
-			10, 10, 115, 210, hWnd, (HMENU)0, hInst, NULL);
+			10, 10, 115, 80, hWnd, (HMENU)0, hInst, NULL);
 		CreateWindowW(L"Button", L"ASM",
 			WS_CHILD | WS_GROUP | WS_VISIBLE | BS_AUTORADIOBUTTON,
 			20, 30, 100, 30, hWnd, (HMENU)ID_OPTION_ASM, hInst, NULL);
 		CreateWindowW(L"Button", L"CPP",
 			WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON,
 			20, 55, 100, 30, hWnd, (HMENU)ID_OPTION_CPP, hInst, NULL);
+		CreateWindowW(L"Button", L"Save samples",
+			WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
+			10, 90, 115, 130, hWnd, (HMENU)0, hInst, NULL);
+		CreateWindowW(L"Button", L"Yes",
+			WS_CHILD | WS_GROUP | WS_VISIBLE | BS_AUTORADIOBUTTON,
+			20, 110, 100, 30, hWnd, (HMENU)ID_OPTION_Y, hInst, NULL);
+		CreateWindowW(L"Button", L"No",
+			WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON,
+			20, 135, 100, 30, hWnd, (HMENU)ID_OPTION_N, hInst, NULL);
 		CreateWindowW(L"Button", L"Choose thread count",
 			WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
 			130, 10, 150, 210, hWnd, (HMENU)0, hInst, NULL);
@@ -191,9 +206,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 								_wfopen_s(&wavFile, pszFilePath, L"rb");
 
 								bool useAsm = false;
+								bool writeSamples = false;
 								int numberOfThreads = 2;
 								if (IsDlgButtonChecked(hWnd, ID_OPTION_ASM)) {
 									useAsm = true;
+								}
+								if (IsDlgButtonChecked(hWnd, ID_OPTION_Y)) {
+									writeSamples = true;
 								}
 								if (IsDlgButtonChecked(hWnd, ID_OPTION_2)) {
 									numberOfThreads = 2;
@@ -213,9 +232,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 								else if (IsDlgButtonChecked(hWnd, ID_OPTION_64)) {
 									numberOfThreads = 64;
 								}
-								unsigned int size = loadWAV(&wavFile, &samples, useAsm, numberOfThreads, pszFilePath);
+								long long runtime = loadWAV(&wavFile, &samples, useAsm, numberOfThreads, pszFilePath, writeSamples);
 								wchar_t * temp = new wchar_t[128];
-								wsprintfW(temp, L"File path \n Size: %d", size);
+								wsprintfW(temp, L"Completed in: %d ms", runtime);
 								MessageBoxW(NULL, pszFilePath, temp, MB_OK);
 								CoTaskMemFree(pszFilePath);
 							}

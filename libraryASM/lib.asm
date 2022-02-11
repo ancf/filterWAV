@@ -1,8 +1,8 @@
-
+.486
+.mmx
+.xmm
 
 .model flat, stdcall
-
-
 .code
 
 filterASM proc original: DWORD, copy: DWORD, min: DWORD, max: DWORD
@@ -21,7 +21,7 @@ filterASM proc original: DWORD, copy: DWORD, min: DWORD, max: DWORD
 ;	mov 
 	mov edi, max
 	sub edi, min
-	sar edi, 1
+;	sar edi, 1
 
 	
 
@@ -70,14 +70,12 @@ loops:
 	jmp tests
 finish:
 
-;	pop edi ;min
-;	pop ecx ;max
-;	pop eax ;pointer to copy array which we will modify
-;	pop edx ;pointer to original array
-	
-	
-	
+	pop edi ;min
+	pop ecx ;max
+	pop eax ;pointer to copy array which we will modify
+	pop edx ;pointer to original array
+
 	ret
 filterASM endp
 
-end
+end 

@@ -33,10 +33,10 @@ protected:
 	short * right;
 	short * leftOriginal;
 	short * rightOriginal;
-	int * rawData;
 	int sampleCount;
 public:
 	FileWAV(byte * wav);
+	~FileWAV();
 	int getFileSize();
 	int getDataSize();
 	short * getLeft();
@@ -44,8 +44,8 @@ public:
 	int getBytesPerSample();
 	int getBitsPerSample();
 	int getChannels();
-	void processInThreads(unsigned int numberOfThreads, bool useAsm, LPWSTR filepath);
-	void writeTestResultsToTxt(short * tab, short * copy, int size, int testTime, std::wstring filepath, bool isMono, bool isRight);
+	long long processInThreads(unsigned int numberOfThreads, bool useAsm, LPWSTR filepath, bool writeSamples);
+	void writeTestResultsToTxt(short * tab, short * copy, int size, std::wstring filepath, bool isMono, bool isRight);
 	std::wstring getDirectory(LPCWSTR filepath);
 	void write(std::wstring workspace);
 private:
