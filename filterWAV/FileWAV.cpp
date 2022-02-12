@@ -125,7 +125,7 @@ int FileWAV::getBitsPerSample() {
 int FileWAV::getChannels() {
 		return this->channels;
 	}
-long long FileWAV::processInThreads(unsigned int numberOfThreads, bool useAsm, LPWSTR filepath, bool writeSamples) {
+long long FileWAV::processInThreads(unsigned int numberOfThreads, bool useAsm, LPWSTR filepath, bool writeSamples, bool alternativeMode) {
 		std::wstring temp(filepath);
 		size_t index = temp.rfind('\\');
 		std::wstring workspace = temp.substr(0, index);
@@ -137,17 +137,33 @@ long long FileWAV::processInThreads(unsigned int numberOfThreads, bool useAsm, L
 		unsigned int size = ceil(sampleCount / 2);
 
 		auto time_begin = std::chrono::high_resolution_clock::now();
-
+		
+		float sectionSizeFloat;
 		std::vector < std::thread > threads;
-		float sectionSizeFloat = size / (numberOfThreads / this->channels);
+		if (numberOfThreads >= this->channels) {
+			sectionSizeFloat = size / (numberOfThreads / 2);
+		}
+		else {
+			sectionSizeFloat = size;
+		}
+		
+		
 		unsigned int sectionSize = ceil(sectionSizeFloat);
 		unsigned int lowerBoundry;
 		unsigned int upperBoundry;
-	
+		
+		
+
 		
 		if (useAsm) {
 			FILTERASM filter;
-			filter = (FILTERASM)GetProcAddress(dllHandleAsm, "filterASM");
+			if (alternativeMode) {
+				filter = (FILTERASM)GetProcAddress(dllHandleAsm, "altFilterASM");
+			}
+			else {
+				filter = (FILTERASM)GetProcAddress(dllHandleAsm, "filterASM");
+			}
+		
 			if (numberOfThreads == 1) {
 				if (this->channels == 2) {
 					threads.push_back(std::thread(filter, leftOriginal, left, 0, sectionSize));
@@ -193,7 +209,12 @@ long long FileWAV::processInThreads(unsigned int numberOfThreads, bool useAsm, L
 		}
 		else {
 			FILTERC filter;
-			filter = (FILTERC)GetProcAddress(dllHandleC, "filterC");
+			if (alternativeMode) {
+				filter = (FILTERC)GetProcAddress(dllHandleC, "altFilterC");
+			}
+			else {
+				filter = (FILTERC)GetProcAddress(dllHandleC, "filterC");
+			}
 			if (numberOfThreads == 1) {
 				if (this->channels == 2) {
 					threads.push_back(std::thread(filter, leftOriginal, left, 0, sectionSize));

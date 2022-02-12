@@ -44,7 +44,7 @@ public:
 	int getBytesPerSample();
 	int getBitsPerSample();
 	int getChannels();
-	long long processInThreads(unsigned int numberOfThreads, bool useAsm, LPWSTR filepath, bool writeSamples);
+	long long processInThreads(unsigned int numberOfThreads, bool useAsm, LPWSTR filepath, bool writeSamples, bool alternativeMode);
 	void writeTestResultsToTxt(short * tab, short * copy, int size, std::wstring filepath, bool isMono, bool isRight);
 	std::wstring getDirectory(LPCWSTR filepath);
 	void write(std::wstring workspace);

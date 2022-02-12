@@ -18,8 +18,8 @@
 #define ID_BUTTON 10
 #define ID_CONFIRM 11
 
-#define ID_OPTION_Y 12
-#define ID_OPTION_N 13
+#define ID_CHECKBOX_SAMPLES 12
+#define ID_CHECKBOX_MODE 13
 
 HINSTANCE hInst;
 WCHAR szTitle[MAX_LOADSTRING];
@@ -35,7 +35,7 @@ FILE * wavOutputFile;
 
 
 
-long long loadWAV(FILE ** wavFile, BYTE ** samples, bool useAsm, int threadCount, LPWSTR filepath, bool writeSamples) {
+long long loadWAV(FILE ** wavFile, BYTE ** samples, bool useAsm, int threadCount, LPWSTR filepath, bool writeSamples, bool alternativeMode) {
 	fseek(*wavFile, 0, SEEK_END);
 	unsigned long fsize = ftell(*wavFile);
 	rewind(*wavFile);
@@ -50,7 +50,7 @@ long long loadWAV(FILE ** wavFile, BYTE ** samples, bool useAsm, int threadCount
 	long long elapsedTime;
 	
 	FileWAV * file = new FileWAV(*samples);
-	elapsedTime = file->processInThreads(threadCount, useAsm, filepath, writeSamples);
+	elapsedTime = file->processInThreads(threadCount, useAsm, filepath, writeSamples, alternativeMode);
 	delete file;
 	fclose(*wavFile);
 
@@ -117,7 +117,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow) {
 //		CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
 	
 	HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-	CW_USEDEFAULT, CW_USEDEFAULT, 310, 320, nullptr, nullptr, hInstance, nullptr);
+	CW_USEDEFAULT, CW_USEDEFAULT, 350, 320, nullptr, nullptr, hInstance, nullptr);
 
 
 	if (!hWnd) {
@@ -137,53 +137,80 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 	case WM_CREATE:
 		CreateWindowW(L"Button", L"Choose mode",
 			WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
-			10, 10, 115, 80, hWnd, (HMENU)0, hInst, NULL);
+			10, 10, 155, 80, hWnd, (HMENU)0, hInst, NULL);
 		CreateWindowW(L"Button", L"ASM",
 			WS_CHILD | WS_GROUP | WS_VISIBLE | BS_AUTORADIOBUTTON,
 			20, 30, 100, 30, hWnd, (HMENU)ID_OPTION_ASM, hInst, NULL);
 		CreateWindowW(L"Button", L"CPP",
 			WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON,
 			20, 55, 100, 30, hWnd, (HMENU)ID_OPTION_CPP, hInst, NULL);
-		CreateWindowW(L"Button", L"Save samples",
+		CreateWindowW(L"Button", L"Options",
 			WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
-			10, 90, 115, 130, hWnd, (HMENU)0, hInst, NULL);
-		CreateWindowW(L"Button", L"Yes",
-			WS_CHILD | WS_GROUP | WS_VISIBLE | BS_AUTORADIOBUTTON,
-			20, 110, 100, 30, hWnd, (HMENU)ID_OPTION_Y, hInst, NULL);
-		CreateWindowW(L"Button", L"No",
-			WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON,
-			20, 135, 100, 30, hWnd, (HMENU)ID_OPTION_N, hInst, NULL);
+			10, 90, 155, 130, hWnd, (HMENU)0, hInst, NULL);
+		CreateWindowW(L"Button", L"Save samples",
+			WS_CHILD | WS_VISIBLE | BS_CHECKBOX,
+			20, 110, 140, 30, hWnd, (HMENU)ID_CHECKBOX_SAMPLES, hInst, NULL);
+		CheckDlgButton(hWnd, 12, BST_UNCHECKED);
+		CreateWindowW(L"Button", L"Alternative mode",
+			WS_CHILD | WS_VISIBLE | BS_CHECKBOX,
+			20, 135, 140, 30, hWnd, (HMENU)ID_CHECKBOX_MODE, hInst, NULL);
+		CheckDlgButton(hWnd, 13, BST_UNCHECKED);
 		CreateWindowW(L"Button", L"Choose thread count",
 			WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
-			130, 10, 150, 210, hWnd, (HMENU)0, hInst, NULL);
+			170, 10, 150, 210, hWnd, (HMENU)0, hInst, NULL);
 		CreateWindowW(L"Button", L"1",
 			WS_CHILD | WS_GROUP | WS_VISIBLE | BS_AUTORADIOBUTTON ,
-			140, 30, 130, 30, hWnd, (HMENU)ID_OPTION_1, hInst, NULL);
+			180, 30, 130, 30, hWnd, (HMENU)ID_OPTION_1, hInst, NULL);
 		CreateWindowW(L"Button", L"2",
 			WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON,
-			140, 55, 130, 30, hWnd, (HMENU)ID_OPTION_2, hInst, NULL);
+			180, 55, 130, 30, hWnd, (HMENU)ID_OPTION_2, hInst, NULL);
 		CreateWindowW(L"Button", L"4",
 			WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON,
-			140, 80, 130, 30, hWnd, (HMENU)ID_OPTION_4, hInst, NULL);
+			180, 80, 130, 30, hWnd, (HMENU)ID_OPTION_4, hInst, NULL);
 		CreateWindowW(L"Button", L"8",
 			WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON,
-			140, 105, 130, 30, hWnd, (HMENU)ID_OPTION_8, hInst, NULL);
+			180, 105, 130, 30, hWnd, (HMENU)ID_OPTION_8, hInst, NULL);
 		CreateWindowW(L"Button", L"16",
 			WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON,
-			140, 130, 130, 30, hWnd, (HMENU)ID_OPTION_16, hInst, NULL);
+			180, 130, 130, 30, hWnd, (HMENU)ID_OPTION_16, hInst, NULL);
 		CreateWindowW(L"Button", L"32",
 			WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON,
-			140, 155, 130, 30, hWnd, (HMENU)ID_OPTION_32, hInst, NULL);
+			180, 155, 130, 30, hWnd, (HMENU)ID_OPTION_32, hInst, NULL);
 		CreateWindowW(L"Button", L"64",
 			WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON,
-			140, 180, 130, 30, hWnd, (HMENU)ID_OPTION_64, hInst, NULL);
+			180, 180, 130, 30, hWnd, (HMENU)ID_OPTION_64, hInst, NULL);
 		CreateWindowW(L"Button", L"Load WAV file", WS_CHILD | WS_VISIBLE,
-			10, 230, 270, 25, hWnd, (HMENU)ID_BUTTON, NULL, NULL);
+			10, 230, 310, 25, hWnd, (HMENU)ID_BUTTON, NULL, NULL);
 
 		break;
 	case WM_COMMAND: {
 		int wmId = LOWORD(wParam);
+		
 		switch (wmId) {
+		case ID_CHECKBOX_SAMPLES: 
+			if(SUCCEEDED(hr)) {
+				bool checked = IsDlgButtonChecked(hWnd, 12);
+				if (checked)
+				{
+					CheckDlgButton(hWnd, 12, BST_UNCHECKED);
+				}
+				else {
+					CheckDlgButton(hWnd, 12, BST_CHECKED);
+				} 
+			}
+			break;
+		case ID_CHECKBOX_MODE:
+			if (SUCCEEDED(hr)) {
+				bool checked = IsDlgButtonChecked(hWnd, 13);
+				if (checked)
+				{
+					CheckDlgButton(hWnd, 13, BST_UNCHECKED);
+				}
+				else {
+					CheckDlgButton(hWnd, 13, BST_CHECKED);
+				}
+			}
+			break;
 		case ID_BUTTON:
 			if (SUCCEEDED(hr)) {
 				IFileOpenDialog * pFileOpen;
@@ -207,14 +234,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 
 								bool useAsm = false;
 								bool writeSamples = false;
-								int numberOfThreads = 2;
+								bool alternativeMode = false;
+								int numberOfThreads = 1;
+								
 								if (IsDlgButtonChecked(hWnd, ID_OPTION_ASM)) {
 									useAsm = true;
 								}
-								if (IsDlgButtonChecked(hWnd, ID_OPTION_Y)) {
+								if (IsDlgButtonChecked(hWnd, ID_CHECKBOX_SAMPLES)) {
 									writeSamples = true;
 								}
-								if (IsDlgButtonChecked(hWnd, ID_OPTION_2)) {
+								if (IsDlgButtonChecked(hWnd, ID_CHECKBOX_MODE)) {
+									alternativeMode = true;
+								}
+								if (IsDlgButtonChecked(hWnd, ID_OPTION_1)) {
+									numberOfThreads = 1;
+								} else if (IsDlgButtonChecked(hWnd, ID_OPTION_2)) {
 									numberOfThreads = 2;
 								}
 								else if (IsDlgButtonChecked(hWnd, ID_OPTION_4)) {
@@ -232,7 +266,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 								else if (IsDlgButtonChecked(hWnd, ID_OPTION_64)) {
 									numberOfThreads = 64;
 								}
-								long long runtime = loadWAV(&wavFile, &samples, useAsm, numberOfThreads, pszFilePath, writeSamples);
+								long long runtime = loadWAV(&wavFile, &samples, useAsm, numberOfThreads, pszFilePath, writeSamples, alternativeMode);
 								wchar_t * temp = new wchar_t[128];
 								wsprintfW(temp, L"Completed in: %d ms", runtime);
 								MessageBoxW(NULL, pszFilePath, temp, MB_OK);

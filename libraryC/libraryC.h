@@ -9,4 +9,5 @@
 
 
 extern "C" LIBRARYC_API void filterC(short * tab, short * copy, unsigned int min, unsigned int max);
+extern "C" LIBRARYC_API void altFilterC(short * tab, short * copy, unsigned int min, unsigned int max);
 

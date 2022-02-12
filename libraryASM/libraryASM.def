@@ -1,3 +1,4 @@
 LIBRARY "libraryASM"
 
-EXPORTS filterASM 
+EXPORTS filterASM
+EXPORTS altFilterASM
