@@ -21,16 +21,8 @@ filterASM proc original: DWORD, copy: DWORD, min: DWORD, max: DWORD
 ;	mov 
 	mov edi, max
 	sub edi, min
-;	sar edi, 1
+	sar edi, 3 ;8 values per iteration
 
-	
-
-tests:
-	cmp edi, 0
-	jne loops
-	je finish
-loops:
-	
 	
 	movdqu xmm0, [edx+ecx]
 	movdqu xmm1, [edx+ecx+2]
@@ -61,19 +53,131 @@ loops:
 	paddw xmm0, xmm6
 	paddw xmm0, xmm7
 	
-	
 	movdqu [eax+ecx+16], xmm0
 
-	sub edi,1
-	add ecx, 2
+	sub edi, 1
+	add ecx, 16
+
+tests:
+	mov esi, 0
+	cmp edi, 0
+	jne loops
+	je finish
+nested:
+	mov esp, esi
+;	add esp, 1
+	
+	sal esp, 1
+	add esp, ecx
+	movdqu xmm1, [edx+esp]
+	movdqu xmm2, [edx+esp-16]
+	
+	psraw xmm1, 3
+	psraw xmm2, 3
+	
+	paddw xmm0, xmm1
+	psubw xmm0, xmm2
+	
+	add esi, 1
+	jmp test_nested
+test_nested:
+	
+	cmp esi, 8
+	jne nested
+	jmp loopfin
+loopfin:
+	movdqu [eax+ecx+16], xmm0
+
+	sub edi, 1
+	add ecx, 16
 
 	jmp tests
+loops:	
+	
+	
+	jmp test_nested
+
+;	movdqu xmm1, [edx+ecx+2]
+;	movdqu xmm2, [edx+ecx-14]
+;	sub esi, 1
+;	psraw xmm1, 3
+;	psraw xmm2, 3
+	
+;	psubw xmm0, xmm2
+;	paddw xmm0, xmm1
+	
+;	movdqu xmm1, [edx+ecx+4]
+;	movdqu xmm2, [edx+ecx-12]
+	
+;	psraw xmm1, 3
+;	psraw xmm2, 3
+	
+;	psubw xmm0, xmm2
+;	paddw xmm0, xmm1
+	
+;	movdqu xmm1, [edx+ecx+6]
+;	movdqu xmm2, [edx+ecx-10]
+	
+;	psraw xmm1, 3
+;	psraw xmm2, 3
+	
+;	psubw xmm0, xmm2
+;	paddw xmm0, xmm1
+	
+;	movdqu xmm1, [edx+ecx+8]
+;	movdqu xmm2, [edx+ecx-8]
+	
+;	psraw xmm1, 3
+;	psraw xmm2, 3
+	
+;	psubw xmm0, xmm2
+;	paddw xmm0, xmm1
+	
+;	movdqu xmm1, [edx+ecx+10]
+;	movdqu xmm2, [edx+ecx-6]
+	
+;	psraw xmm1, 3
+;	psraw xmm2, 3
+	
+;	psubw xmm0, xmm2
+;	paddw xmm0, xmm1
+	
+;	movdqu xmm1, [edx+ecx+12]
+;	movdqu xmm2, [edx+ecx-4]
+	
+;	psraw xmm1, 3
+;	psraw xmm2, 3
+	
+;	psubw xmm0, xmm2
+;	paddw xmm0, xmm1
+	
+;	movdqu xmm1, [edx+ecx+14]
+;	movdqu xmm2, [edx+ecx-2]
+	
+;	psraw xmm1, 3
+;	psraw xmm2, 3
+	
+;	psubw xmm0, xmm2
+;	paddw xmm0, xmm1
+	
+;	movdqu xmm1, [edx+ecx+16]
+;	movdqu xmm2, [edx+ecx]
+	
+;	psraw xmm1, 3
+;	psraw xmm2, 3
+	
+;	psubw xmm0, xmm2
+;	paddw xmm0, xmm1
+
+	
+	
+
 finish:
 
-	pop edi ;min
-	pop ecx ;max
-	pop eax ;pointer to copy array which we will modify
-	pop edx ;pointer to original array
+;	pop edi ;min
+;	pop ecx ;max
+;	pop eax ;pointer to copy array which we will modify
+;	pop edx ;pointer to original array
 
 	ret
 filterASM endp
