@@ -1,7 +1,17 @@
+/*
+	Temat projektu: Filtr uœredniaj¹cy WAV (œrednia krocz¹ca)
+	Semestr: 5
+	Rok akademicki: 2021/2022
+	Opis algorytmu:
+		Prosta œrednia ruchoma - œrednia arytmetyczna z ostatnich n pomiarów
+	Autor: Krystian Stebel
+*/
+
 #include "FileWAV.h"
 
 
 FileWAV::FileWAV(byte * wav) {
+
 		for (int i = 0; i < 4; i++) {
 			riff[i] = (char)wav[i];
 		};
@@ -85,7 +95,7 @@ FileWAV::FileWAV(byte * wav) {
 			rightOriginal = NULL;
 		}
 		int i = 0;
-		while (pos < samples * 4) {
+		while (pos < samples * 2 * channels) {
 			left[i] = bytesToInteger(wav[pos], wav[pos + 1]);
 			leftOriginal[i] = bytesToInteger(wav[pos], wav[pos + 1]);
 
@@ -140,7 +150,7 @@ long long FileWAV::processInThreads(unsigned int numberOfThreads, bool useAsm, L
 		
 		float sectionSizeFloat;
 		std::vector < std::thread > threads;
-		if (numberOfThreads >= this->channels) {
+		if (numberOfThreads >= this->channels && this->channels == 2) {
 			sectionSizeFloat = size / (numberOfThreads / 2);
 		}
 		else {
@@ -174,7 +184,7 @@ long long FileWAV::processInThreads(unsigned int numberOfThreads, bool useAsm, L
 					threads.pop_back();
 				}
 				else {
-					threads.push_back(std::thread(filter, leftOriginal, left, lowerBoundry, upperBoundry));
+					threads.push_back(std::thread(filter, leftOriginal, left, 0, sectionSize));
 					threads[0].join();
 				}
 			}
@@ -196,7 +206,7 @@ long long FileWAV::processInThreads(unsigned int numberOfThreads, bool useAsm, L
 					}
 				}
 				else {
-					for (int i = 0; i < (numberOfThreads / 2); i++) {
+					for (int i = 0; i < numberOfThreads ; i++) {
 						lowerBoundry = i * sectionSize;
 						upperBoundry = min((i + 1) * sectionSize - 1, size);
 						threads.push_back(std::thread(filter, leftOriginal, left, lowerBoundry, upperBoundry));
@@ -225,7 +235,7 @@ long long FileWAV::processInThreads(unsigned int numberOfThreads, bool useAsm, L
 					threads.pop_back();
 				}
 				else {
-					threads.push_back(std::thread(filter, leftOriginal, left, lowerBoundry, upperBoundry));
+					threads.push_back(std::thread(filter, leftOriginal, left, 0, sectionSize));
 					threads[0].join();
 				}
 			}
@@ -246,7 +256,7 @@ long long FileWAV::processInThreads(unsigned int numberOfThreads, bool useAsm, L
 					}
 				}
 				else {
-					for (int i = 0; i < (numberOfThreads / 2); i++) {
+					for (int i = 0; i < numberOfThreads ; i++) {
 						lowerBoundry = i * sectionSize;
 						upperBoundry = min((i + 1) * sectionSize - 1, size);
 						threads.push_back(std::thread(filter, leftOriginal, left, lowerBoundry, upperBoundry));

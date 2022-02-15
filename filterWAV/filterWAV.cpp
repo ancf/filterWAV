@@ -1,4 +1,15 @@
-﻿#include "framework.h"
+﻿/*
+	Temat projektu: Filtr uśredniający WAV (średnia krocząca)
+	Semestr: 5
+	Rok akademicki: 2021/2022
+	Opis algorytmu: 
+		Prosta średnia ruchoma - średnia arytmetyczna z ostatnich n pomiarów 
+	Autor: Krystian Stebel
+*/
+
+
+
+#include "framework.h"
 
 #include "filterWAV.h"
 
@@ -36,8 +47,8 @@ FILE * wavOutputFile;
 
 
 long long loadWAV(FILE ** wavFile, BYTE ** samples, bool useAsm, int threadCount, LPWSTR filepath, bool writeSamples, bool alternativeMode) {
-	fseek(*wavFile, 0, SEEK_END);
-	unsigned long fsize = ftell(*wavFile);
+	_fseeki64(*wavFile, 0, SEEK_END);
+	unsigned long fsize = _ftelli64(*wavFile);
 	rewind(*wavFile);
 	*samples = (BYTE *)malloc(fsize + 1);
 
@@ -50,6 +61,7 @@ long long loadWAV(FILE ** wavFile, BYTE ** samples, bool useAsm, int threadCount
 	long long elapsedTime;
 	
 	FileWAV * file = new FileWAV(*samples);
+	free(*samples);
 	elapsedTime = file->processInThreads(threadCount, useAsm, filepath, writeSamples, alternativeMode);
 	delete file;
 	fclose(*wavFile);
